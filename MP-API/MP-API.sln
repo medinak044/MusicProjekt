@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33530.505
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MP-API", "MP-API\MP-API.csproj", "{65A43FF5-16A8-49BF-97A3-659249F4F08F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{65A43FF5-16A8-49BF-97A3-659249F4F08F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65A43FF5-16A8-49BF-97A3-659249F4F08F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65A43FF5-16A8-49BF-97A3-659249F4F08F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65A43FF5-16A8-49BF-97A3-659249F4F08F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B54FDB21-47ED-41EF-88F8-5AEB65B2A8A8}
+	EndGlobalSection
+EndGlobal
