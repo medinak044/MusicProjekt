@@ -16,7 +16,6 @@ Project class
 	- Project owner
 	- Track complete? (has the track been completed before?)
 	- Who is assigned
-	- Project status (Planned, Active, Hiatus, Revision, Done)
 	- A collection of specific tasks that must be completed (re-rendering, adding effects chain, etc)
 }
 UserProjectCollection class
@@ -26,6 +25,7 @@ UserProjectCollection class
 ProjectCollectionItem class (an element of the user project collection)
 {
 	- Priority number
+	- Project status (Planned, Active, Hiatus, Revision, Done)
 	- Project
 }
 
