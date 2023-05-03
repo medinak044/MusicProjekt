@@ -20,35 +20,33 @@ namespace MP_API.Controllers;
 public class AccountController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
-    private readonly SignInManager<AppUser> _signInManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly IConfiguration _appSettings;
-    private readonly TokenValidationParameters _tokenValidationParams;
+    //private readonly RoleManager<IdentityRole> _roleManager;
+    //private readonly IConfiguration _appSettings;
+    //private readonly TokenValidationParameters _tokenValidationParams;
     private readonly IMapper _mapper;
 
     public AccountController(
     //    DataContext context,
     //IUnitOfWork unitOfWork,
     UserManager<AppUser> userManager,
-    SignInManager<AppUser> signInManager,
-    RoleManager<IdentityRole> roleManager,
-    IConfiguration appSettings, // (Access app settings data for Jwt token)
-    TokenValidationParameters tokenValidationParams, // (Jwt token)
+    //RoleManager<IdentityRole> roleManager,
+    //IConfiguration appSettings, // (Access app settings data for Jwt token)
+    //TokenValidationParameters tokenValidationParams, // (Jwt token)
     IMapper mapper
         )
     {
         _userManager = userManager;
-        _signInManager = signInManager;
-        _roleManager = roleManager;
-        _appSettings = appSettings;
-        _tokenValidationParams = tokenValidationParams;
+        //_roleManager = roleManager;
+        //_appSettings = appSettings;
+        //_tokenValidationParams = tokenValidationParams;
         _mapper = mapper;
     }
 
     [HttpGet($"{nameof(this.GetAllUsers)}")]
     public async Task<ActionResult> GetAllUsers()
     {
-        return Ok();
+        var users = _mapper.Map<List<AppUserDto>>(await _userManager.Users.ToListAsync());
+        return Ok(users);
     }
 
     //[HttpGet($"{nameof(this.GetSomeUsers)}")]
@@ -59,15 +57,10 @@ public class AccountController : ControllerBase
 
     // If getting the current user's data, have the client send the id from the browser cookie
     [HttpGet($"{nameof(this.GetUserById)}")]
-    public async Task<ActionResult> GetUserById()
+    public async Task<ActionResult> GetUserById(string userId)
     {
-        return Ok();
-    }
-
-    [HttpGet($"{nameof(this.AddUser)}")]
-    public async Task<ActionResult> AddUser()
-    {
-        return Ok();
+        var user = _mapper.Map<AppUserDto>(await _userManager.FindByIdAsync(userId));
+        return Ok(user);
     }
 
     [HttpPost($"{nameof(this.Register)}")]
@@ -98,15 +91,15 @@ public class AccountController : ControllerBase
             });
         }
 
-        // Prevent new user from being created if "AppUser" default role don't exist
-        if (await _roleManager.FindByNameAsync("AppUser") == null)
-        {
-            return BadRequest(new ApiResponse()
-            {
-                Success = false,
-                Messages = new List<string>() { "AppUser default account role doesn't exist" }
-            });
-        }
+        //// Prevent new user from being created if "AppUser" default role don't exist
+        //if (await _roleManager.FindByNameAsync("AppUser") == null)
+        //{
+        //    return BadRequest(new ApiResponse()
+        //    {
+        //        Success = false,
+        //        Messages = new List<string>() { "AppUser default account role doesn't exist" }
+        //    });
+        //}
 
         // Grab the new user from db
         AppUser newUserFromDb = await _userManager.FindByEmailAsync(requestDto.Email);

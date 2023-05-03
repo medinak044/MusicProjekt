@@ -16,17 +16,14 @@ namespace MP_API.Controllers
     public class WorkspaceController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly UserManager<AppUser> _userManager;
         private readonly IMapper _mapper;
 
         public WorkspaceController(
             IUnitOfWork unitOfWork,
-            UserManager<AppUser> userManager,
             IMapper mapper
             )
         {
             _unitOfWork = unitOfWork;
-            _userManager = userManager;
             _mapper = mapper;
         }
 

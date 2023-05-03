@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MP_API.Data;
+using MP_API.Data.Models;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -108,6 +110,9 @@ builder.Services.AddCors(
             });
     }
 );
+
+builder.Services.AddIdentity<AppUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddEntityFrameworkStores<DataContext>();
 
 var app = builder.Build();
 
