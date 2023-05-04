@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -46,7 +47,12 @@ public class AccountController : ControllerBase
     public async Task<ActionResult> GetAllUsers()
     {
         var users = _mapper.Map<List<AppUserDto>>(await _userManager.Users.ToListAsync());
-        return Ok(users);
+        return Ok(new ApiResponse()
+        {
+            DataObject = users,
+            Success = true,
+            Messages = null
+        });
     }
 
     //[HttpGet($"{nameof(this.GetSomeUsers)}")]
@@ -60,7 +66,22 @@ public class AccountController : ControllerBase
     public async Task<ActionResult> GetUserById(string userId)
     {
         var user = _mapper.Map<AppUserDto>(await _userManager.FindByIdAsync(userId));
-        return Ok(user);
+
+        if (user == null)
+        {
+            return NotFound(new ApiResponse()
+            {
+                Success = false,
+                Messages = new List<string>() { "User doesn't exist" }
+            });
+        }
+
+        return Ok(new ApiResponse()
+        {
+            DataObject = user,
+            Success = true,
+            Messages = null
+        });
     }
 
     [HttpPost($"{nameof(this.Register)}")]
@@ -101,7 +122,7 @@ public class AccountController : ControllerBase
         //    });
         //}
 
-        // Grab the new user from db
+        // Track the new user from DB
         AppUser newUserFromDb = await _userManager.FindByEmailAsync(requestDto.Email);
         if (newUserFromDb == null)
         {
@@ -124,7 +145,12 @@ public class AccountController : ControllerBase
         //// Then map the token data
         //_mapper.Map<ApiResponse, AppUserLoggedInDto>(jwtTokenResult, loggedInUser);
 
-        return Ok(loggedInUser);
+        return Ok(new ApiResponse()
+        {
+            DataObject = loggedInUser,
+            Success = true,
+            Messages = null
+        });
     }
 
     [HttpPost($"{nameof(this.Login)}")]
@@ -163,7 +189,12 @@ public class AccountController : ControllerBase
         //// Then map the token data
         //_mapper.Map<ApiResponse, AppUserLoggedInDto>(jwtTokenResult, loggedInUser);
 
-        return Ok(loggedInUser);
+        return Ok(new ApiResponse() 
+        { 
+            DataObject = loggedInUser, 
+            Success = true, 
+            Messages = null 
+        });
     }
 
     [HttpPost($"{nameof(this.UpdateUser)}")]
@@ -201,7 +232,12 @@ public class AccountController : ControllerBase
         await _userManager.UpdateAsync(existingUser);
 
         //return Ok("User successfully updated");
-        return Ok(existingUser);
+        return Ok(new ApiResponse() 
+        { 
+            DataObject = existingUser, 
+            Success = true, 
+            Messages = null 
+        });
     }
 
     [HttpDelete($"{nameof(this.DeleteUser)}")]
@@ -232,7 +268,11 @@ public class AccountController : ControllerBase
         // Delete user from db
         await _userManager.DeleteAsync(existingUser);
 
-        return Ok("User successfully deleted");
+        return Ok(new ApiResponse() 
+        { 
+            Success = true, 
+            Messages = new List<string>() { "User successfully deleted" }
+        });
     }
 
     //[HttpGet($"{nameof(this.Default)}")]

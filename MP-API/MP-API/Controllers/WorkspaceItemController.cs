@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.CodeAnalysis;
 using MP_API.Data;
 using MP_API.Data.DTOs;
 using MP_API.Data.Models;
@@ -11,13 +12,13 @@ namespace MP_API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [EnableRateLimiting("fixed")]
-    public class WorkspaceController : ControllerBase
+    public class WorkspaceItemController : ControllerBase
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
 
-        public WorkspaceController(
+        public WorkspaceItemController(
             UserManager<AppUser> userManager,
             IUnitOfWork unitOfWork,
             IMapper mapper
@@ -28,35 +29,35 @@ namespace MP_API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet($"{nameof(this.GetAllWorkspaces)}")]
-        public async Task<ActionResult> GetAllWorkspaces()
+        [HttpGet($"{nameof(this.GetAllWorkspaceItems)}")]
+        public async Task<ActionResult> GetAllWorkspaceItems()
         {
-            var workspaces = await _unitOfWork.Workspaces.GetAllAsync();
+            var workspaceItems = await _unitOfWork.WorkspaceItems.GetAllAsync();
             return Ok(new ApiResponse()
             {
-                DataObject = workspaces,
+                DataObject = workspaceItems,
                 Success = true,
                 Messages = null
             });
         }
 
-        [HttpGet($"{nameof(this.GetWorkspaceById)}")]
-        public async Task<ActionResult> GetWorkspaceById(int workspaceId)
+        [HttpGet($"{nameof(this.GetWorkspaceItemById)}")]
+        public async Task<ActionResult> GetWorkspaceItemById(int workspaceItemId)
         {
-            var workspace = await _unitOfWork.Workspaces.GetByIdAsync(workspaceId);
+            var workspaceItem = await _unitOfWork.WorkspaceItems.GetByIdAsync(workspaceItemId);
             return Ok(new ApiResponse()
             {
-                DataObject = workspace,
+                DataObject = workspaceItem,
                 Success = true,
                 Messages = null
             });
         }
 
-        [HttpGet($"{nameof(this.GetUserWorkspaces)}")]
-        public async Task<ActionResult> GetUserWorkspaces(string userId)
+        [HttpGet($"{nameof(this.GetWorkspaceItems)}")]
+        public async Task<ActionResult> GetWorkspaceItems(int workspaceId)
         {
-            // Check if user exists in DB
-            if (await _userManager.FindByIdAsync(userId) == null)
+            // Check if Workspace exists in DB
+            if (await _unitOfWork.WorkspaceItems.GetByIdAsync(workspaceId) == null)
             {
                 return BadRequest(new ApiResponse()
                 {
@@ -65,21 +66,23 @@ namespace MP_API.Controllers
                 });
             }
 
-            var resultList = new List<WorkspaceResDto>();
+            // Create a collection of all WorkspaceItems associated with the Workspace
+            var resultList = new List<WorkspaceItemResDto>();
 
-            #region Prepare data for sending user's Workspaces
-            var workspaces = await _unitOfWork.Workspaces.GetAllAsync();
-            foreach (var workspace in workspaces)
+            // List of participants (AppUsers)
+            #region Prepare data for sending user's WorkspaceItems
+            var workspaceItems = await _unitOfWork.WorkspaceItems.GetAllAsync();
+            foreach (var workspaceItem in workspaceItems)
             {
-                // Add all Workspaces that have a matching owner id
-                if (workspace.OwnerId == userId)
+                // Add all WorkspaceItems that have a matching Workspace id
+                if (workspaceItem.WorkspaceId == workspaceId)
                 {
-                    var resultWorkspace = _mapper.Map<WorkspaceResDto>(workspace);
-                    // Include collection object data based on workspace id
-                    resultWorkspace.WorkspaceItems = _unitOfWork.WorkspaceItems.GetSome(wI => wI.WorkspaceId == resultWorkspace.Id).ToList();
+                    var resultWorkspaceItem = _mapper.Map<WorkspaceItemResDto>(workspaceItem);
+                    // Include collection object data based on workspaceItem id
+                    //resultWorkspaceItem.Participants = _mapper.Map<AppUserDto>(await _userManager.FindByIdAsync(resultWorkspaceItem.OwnerId)); /*_unitOfWork.WorkspaceItems.GetSome(wI => wI.WorkspaceItemId == resultWorkspaceItem.Id).ToList();*/
                     // Include owner object data based on owner id
-                    resultWorkspace.Owner = _mapper.Map<AppUserDto>(await _userManager.FindByIdAsync(resultWorkspace.OwnerId));
-                    resultList.Add(resultWorkspace);
+                    //resultWorkspaceItem.Owner = _mapper.Map<AppUserDto>(await _userManager.FindByIdAsync(resultWorkspaceItem.OwnerId));
+                    resultList.Add(resultWorkspaceItem);
                 }
             }
             #endregion
@@ -91,14 +94,14 @@ namespace MP_API.Controllers
             });
         }
 
-        [HttpPost($"{nameof(this.CreateWorkspace)}")]
-        public async Task<ActionResult> CreateWorkspace(WorkspaceReqDto workspaceReqDto)
+        [HttpPost($"{nameof(this.CreateWorkspaceItem)}")]
+        public async Task<ActionResult> CreateWorkspaceItem(WorkspaceItemReqDto workspaceItemReqDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Check if user exists in DB
-            if (await _userManager.FindByIdAsync(workspaceReqDto.OwnerId) == null)
+            // Check if workspace exists in DB
+            if (await _userManager.FindByIdAsync(workspaceItemReqDto.OwnerId.ToString()) == null)
             {
                 return BadRequest(new ApiResponse()
                 {
@@ -108,11 +111,12 @@ namespace MP_API.Controllers
             }
 
             // Map DTO to model
-            var workspace = _mapper.Map<Workspace>(workspaceReqDto);
-            
+            var workspaceItem = _mapper.Map<WorkspaceItem>(workspaceItemReqDto);
+            // Set the timestamp
+            workspaceItem.DateCreated = DateTime.Now;
 
             // Save to DB
-            await _unitOfWork.Workspaces.AddAsync(workspace);
+            await _unitOfWork.WorkspaceItems.AddAsync(workspaceItem);
             if (await _unitOfWork.SaveAsync() == false)
             {
                 return BadRequest(new ApiResponse()
@@ -125,20 +129,20 @@ namespace MP_API.Controllers
 
             return Ok(new ApiResponse()
             {
-                DataObject = workspace,
+                DataObject = workspaceItem,
                 Success = true,
                 Messages = new List<string>() { "Creation complete" }
             });
         }
 
-        [HttpPatch($"{nameof(this.UpdateWorkspace)}")]
-        public async Task<ActionResult> UpdateWorkspace(int workspaceId, [FromBody] WorkspaceReqDto workspaceReqDto)
+        [HttpPatch($"{nameof(this.UpdateWorkspaceItem)}")]
+        public async Task<ActionResult> UpdateWorkspaceItem(int workspaceItemId, [FromBody] WorkspaceItemReqDto workspaceItemReqDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             // Check if exists in DB
-            if (await _unitOfWork.Workspaces.ExistsAsync(x => x.Id == workspaceId) == false)
+            if (await _unitOfWork.WorkspaceItems.ExistsAsync(x => x.Id == workspaceItemId) == false)
             {
                 return NotFound(new ApiResponse()
                 {
@@ -149,12 +153,12 @@ namespace MP_API.Controllers
             }
 
             // Map DTO
-            var workspace = _mapper.Map<Workspace>(workspaceReqDto);
+            var workspaceItem = _mapper.Map<WorkspaceItem>(workspaceItemReqDto);
             // Include the id
-            workspace.Id = workspaceId;
+            workspaceItem.Id = workspaceItemId;
 
             // Save to DB
-            await _unitOfWork.Workspaces.UpdateAsync(workspace);
+            await _unitOfWork.WorkspaceItems.UpdateAsync(workspaceItem);
             if (await _unitOfWork.SaveAsync() == false)
             {
                 return BadRequest(new ApiResponse()
@@ -167,23 +171,23 @@ namespace MP_API.Controllers
 
             return Ok(new ApiResponse()
             {
-                DataObject = workspace, // Updated data
+                DataObject = workspaceItem, // Updated data
                 Success = true,
                 Messages = new List<string>() { "Update complete" }
             });
         }
 
-        [HttpDelete($"{nameof(this.DeleteWorkspace)}")]
-        public async Task<ActionResult> DeleteWorkspace(int workspaceId)
+        [HttpDelete($"{nameof(this.DeleteWorkspaceItem)}")]
+        public async Task<ActionResult> DeleteWorkspaceItem(int workspaceItemId)
         {
             // Track the entity to be deleted
-            var workspace = await _unitOfWork.Workspaces.GetByIdAsync(workspaceId);
+            var workspaceItem = await _unitOfWork.WorkspaceItems.GetByIdAsync(workspaceItemId);
 
-            if (workspace == null)
+            if (workspaceItem == null)
                 return NotFound();
 
             // Delete from DB
-            await _unitOfWork.Workspaces.DeleteAsync(workspace);
+            await _unitOfWork.WorkspaceItems.DeleteAsync(workspaceItem);
             if (await _unitOfWork.SaveAsync() == false)
             {
                 return BadRequest(new ApiResponse()
@@ -196,7 +200,7 @@ namespace MP_API.Controllers
 
             return Ok(new ApiResponse()
             {
-                DataObject = workspace, // Sending previous data allows client to undo changes
+                DataObject = workspaceItem, // Sending previous data allows client to undo changes
                 Success = true,
                 Messages = new List<string>() { "Succesfully deleted" }
             });

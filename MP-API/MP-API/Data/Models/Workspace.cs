@@ -13,7 +13,7 @@ public class Workspace
     public string? Description { get; set; }
     [ForeignKey("AppUser")]
     public string OwnerId { get; set; }
-    [NotMapped] public AppUser? Owner { get; set; }
+    [NotMapped] public AppUser? Owner { get; set; } // Determine if this is needed
     [NotMapped] public ICollection<WorkspaceItem>? WorkspaceItems { get; set; }
 
 }

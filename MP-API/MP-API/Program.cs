@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using MP_API.Data;
 using MP_API.Data.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 //builder.Services.AddTransient<Seed>(); // dotnet run seeddata
+//builder.Services.AddControllers().AddJsonOptions(x =>
+//    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles); // Many to many relationships will go into the entity and get stuck in a loop
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>(); // Unit of work, handles db requests
 builder.Services.AddEndpointsApiExplorer();
