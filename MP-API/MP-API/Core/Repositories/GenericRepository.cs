@@ -26,6 +26,11 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         return await _dbSet.FindAsync(id);
     }
+    // Method overloading
+    public virtual async Task<T?> GetByIdAsync(string id)
+    {
+        return await _dbSet.FindAsync(id);
+    }
 
     public virtual IEnumerable<T> GetSome(Expression<Func<T, bool>> predicate)
     {

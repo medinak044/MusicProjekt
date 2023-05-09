@@ -18,6 +18,9 @@ public class AutoMapperProfiles : Profile
         CreateMap<WorkspaceReqDto, Workspace>(); // When user creates a Workspace
         CreateMap<Workspace, WorkspaceResDto>(); // When sending Workspaces to client
 
+        CreateMap<WorkspaceItemReqDto, WorkspaceItem>(); // When user creates a WorkspaceItem
+        CreateMap<WorkspaceItem, WorkspaceResDto>(); // When sending WorkspaceItems to client
+
 
         //CreateMap<AuthResult, AppUserLoggedInDto>(); // When logging user in, gives token for the client
 

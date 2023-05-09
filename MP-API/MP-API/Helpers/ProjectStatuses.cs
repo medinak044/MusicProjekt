@@ -1,5 +1,6 @@
 ﻿namespace MP_API.Helpers;
 
+// Populate a separate SQL table containing these string values
 public class ProjectStatuses
 {
     public enum ProjectStatusEnum

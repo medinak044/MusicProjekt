@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using MP_API.Data;
 using MP_API.Data.DTOs;
 using MP_API.Data.Models;
+using MP_API.Helpers;
 
 namespace MP_API.Controllers
 {
@@ -45,6 +46,12 @@ namespace MP_API.Controllers
         public async Task<ActionResult> GetWorkspaceItemById(int workspaceItemId)
         {
             var workspaceItem = await _unitOfWork.WorkspaceItems.GetByIdAsync(workspaceItemId);
+
+            // Check if data was retrieved from DB
+            if (workspaceItem == null) 
+                return NotFound();
+            
+
             return Ok(new ApiResponse()
             {
                 DataObject = workspaceItem,
@@ -53,8 +60,8 @@ namespace MP_API.Controllers
             });
         }
 
-        [HttpGet($"{nameof(this.GetWorkspaceItems)}")]
-        public async Task<ActionResult> GetWorkspaceItems(int workspaceId)
+        [HttpGet($"{nameof(this.GetWorkspaceItemsByWorkspaceId)}")]
+        public async Task<ActionResult> GetWorkspaceItemsByWorkspaceId(int workspaceId)
         {
             // Check if Workspace exists in DB
             if (await _unitOfWork.WorkspaceItems.GetByIdAsync(workspaceId) == null)
@@ -100,20 +107,38 @@ namespace MP_API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Check if workspace exists in DB
-            if (await _userManager.FindByIdAsync(workspaceItemReqDto.OwnerId.ToString()) == null)
+            // Check if Workspace exists in DB
+            if (await _unitOfWork.Workspaces.ExistsAsync
+                (x => x.Id == workspaceItemReqDto.WorkspaceId) == false)
             {
                 return BadRequest(new ApiResponse()
                 {
                     Success = false,
-                    Messages = new List<string>() { "User does not exist" }
+                    Messages = new List<string>() { "Workspace does not exist" }
                 });
             }
+
+            //// Check if Project exists in DB
+            //if (await _unitOfWork.Projects.ExistsAsync
+            //    (x => x.Id == workspaceItemReqDto.ProjectId) == false)
+            //{
+            //    return BadRequest(new ApiResponse()
+            //    {
+            //        Success = false,
+            //        Messages = new List<string>() { "Project does not exist" }
+            //    });
+            //}
 
             // Map DTO to model
             var workspaceItem = _mapper.Map<WorkspaceItem>(workspaceItemReqDto);
             // Set the timestamp
             workspaceItem.DateCreated = DateTime.Now;
+            // Set ProjectStatus if it hasn't already been set by client
+            if (string.IsNullOrEmpty(workspaceItem.ProjectStatus) == true)
+            {
+                workspaceItem.ProjectStatus = ProjectStatuses.ProjectStatusEnum.NotStarted.ToString();
+            }
+            // TODO: Set the PriorityNumber to an integer greater than the current greatest PriorityNumber
 
             // Save to DB
             await _unitOfWork.WorkspaceItems.AddAsync(workspaceItem);
@@ -136,7 +161,8 @@ namespace MP_API.Controllers
         }
 
         [HttpPatch($"{nameof(this.UpdateWorkspaceItem)}")]
-        public async Task<ActionResult> UpdateWorkspaceItem(int workspaceItemId, [FromBody] WorkspaceItemReqDto workspaceItemReqDto)
+        public async Task<ActionResult> UpdateWorkspaceItem(int workspaceItemId, 
+            [FromBody] WorkspaceItemReqDto workspaceItemReqDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -156,6 +182,16 @@ namespace MP_API.Controllers
             var workspaceItem = _mapper.Map<WorkspaceItem>(workspaceItemReqDto);
             // Include the id
             workspaceItem.Id = workspaceItemId;
+            // TODO: Check if the ProjectStatus string value matches one of the terms from the DB
+            if (string.IsNullOrEmpty(workspaceItemReqDto.ProjectStatus) == true)
+            {
+                return BadRequest(new ApiResponse()
+                {
+                    Success = false,
+                    Messages = new List<string>() { "ProjectStatus does not have a value" }
+                });
+            }
+            workspaceItem.ProjectStatus = workspaceItemReqDto.ProjectStatus;
 
             // Save to DB
             await _unitOfWork.WorkspaceItems.UpdateAsync(workspaceItem);

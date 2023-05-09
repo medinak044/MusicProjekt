@@ -13,7 +13,5 @@ public class WorkspaceItemResDto
     public int WorkspaceId { get; set; }
     public int ProjectId { get; set; }
     public Project? Project { get; set; }
-    public string OwnerId { get; set; }
-    public AppUser? Owner { get; set; }
     public ICollection<AppUser>? Participants { get; set; } // Set owner as Participant by default
 }

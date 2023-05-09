@@ -15,9 +15,9 @@ public class WorkspaceItem
     [ForeignKey("Project")]
     public int ProjectId { get; set; }
     [NotMapped] public Project? Project { get; set; }
-    [ForeignKey("AppUser")]
-    public string OwnerId { get; set; }
-    [NotMapped] public AppUser? Owner { get; set; }
+    //[ForeignKey("AppUser")]
+    //public string OwnerId { get; set; }
+    //[NotMapped] public AppUser? Owner { get; set; }
     [NotMapped] public ICollection<AppUser>? Participants { get; set; } // Set owner as Participant by default
     //public ICollection<Comment>? Comments { get; set; } // List of comments by participating users regarding the project
 }
