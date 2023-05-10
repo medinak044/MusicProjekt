@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MP_API.Data.DTOs;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MP_API.Data.Models;
@@ -18,6 +19,6 @@ public class WorkspaceItem
     //[ForeignKey("AppUser")]
     //public string OwnerId { get; set; }
     //[NotMapped] public AppUser? Owner { get; set; }
-    [NotMapped] public ICollection<AppUser>? Participants { get; set; } // Set owner as Participant by default
+    [NotMapped] public ICollection<AppUserDto>? Participants { get; set; } // Set owner as Participant by default
     //public ICollection<Comment>? Comments { get; set; } // List of comments by participating users regarding the project
 }

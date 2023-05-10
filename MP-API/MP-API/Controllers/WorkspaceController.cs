@@ -132,13 +132,13 @@ namespace MP_API.Controllers
         }
 
         [HttpPatch($"{nameof(this.UpdateWorkspace)}")]
-        public async Task<ActionResult> UpdateWorkspace(int workspaceId, [FromBody] WorkspaceReqDto workspaceReqDto)
+        public async Task<ActionResult> UpdateWorkspace([FromBody] WorkspaceReqDto workspaceReqDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             // Check if exists in DB
-            if (await _unitOfWork.Workspaces.ExistsAsync(x => x.Id == workspaceId) == false)
+            if (await _unitOfWork.Workspaces.ExistsAsync(x => x.Id == workspaceReqDto.Id) == false)
             {
                 return NotFound(new ApiResponse()
                 {
@@ -151,7 +151,7 @@ namespace MP_API.Controllers
             // Map DTO
             var workspace = _mapper.Map<Workspace>(workspaceReqDto);
             // Include the id
-            workspace.Id = workspaceId;
+            workspace.Id = workspaceReqDto.Id;
 
             // Save to DB
             await _unitOfWork.Workspaces.UpdateAsync(workspace);

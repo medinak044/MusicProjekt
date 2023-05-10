@@ -4,6 +4,7 @@ namespace MP_API.Data.DTOs;
 
 public class WorkspaceItemReqDto
 {
+    public int Id { get; set; }
     public DateTime DateCreated { get; set; }
     public int PriorityNumber { get; set; }
     public string? ProjectStatus { get; set; }

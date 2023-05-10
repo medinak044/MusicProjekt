@@ -64,12 +64,12 @@ namespace MP_API.Controllers
         public async Task<ActionResult> GetWorkspaceItemsByWorkspaceId(int workspaceId)
         {
             // Check if Workspace exists in DB
-            if (await _unitOfWork.WorkspaceItems.GetByIdAsync(workspaceId) == null)
+            if (await _unitOfWork.Workspaces.GetByIdAsync(workspaceId) == null)
             {
                 return BadRequest(new ApiResponse()
                 {
                     Success = false,
-                    Messages = new List<string>() { "User does not exist" }
+                    Messages = new List<string>() { "Workspace does not exist" }
                 });
             }
 
@@ -85,10 +85,8 @@ namespace MP_API.Controllers
                 if (workspaceItem.WorkspaceId == workspaceId)
                 {
                     var resultWorkspaceItem = _mapper.Map<WorkspaceItemResDto>(workspaceItem);
-                    // Include collection object data based on workspaceItem id
-                    //resultWorkspaceItem.Participants = _mapper.Map<AppUserDto>(await _userManager.FindByIdAsync(resultWorkspaceItem.OwnerId)); /*_unitOfWork.WorkspaceItems.GetSome(wI => wI.WorkspaceItemId == resultWorkspaceItem.Id).ToList();*/
-                    // Include owner object data based on owner id
-                    //resultWorkspaceItem.Owner = _mapper.Map<AppUserDto>(await _userManager.FindByIdAsync(resultWorkspaceItem.OwnerId));
+                    // Include Project data
+                    resultWorkspaceItem.Project = await _unitOfWork.Projects.GetByIdAsync(resultWorkspaceItem.ProjectId);
                     resultList.Add(resultWorkspaceItem);
                 }
             }
@@ -161,27 +159,48 @@ namespace MP_API.Controllers
         }
 
         [HttpPatch($"{nameof(this.UpdateWorkspaceItem)}")]
-        public async Task<ActionResult> UpdateWorkspaceItem(int workspaceItemId, 
-            [FromBody] WorkspaceItemReqDto workspaceItemReqDto)
+        public async Task<ActionResult> UpdateWorkspaceItem([FromBody] WorkspaceItemReqDto workspaceItemReqDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             // Check if exists in DB
-            if (await _unitOfWork.WorkspaceItems.ExistsAsync(x => x.Id == workspaceItemId) == false)
+            if (await _unitOfWork.WorkspaceItems.ExistsAsync(x => x.Id == workspaceItemReqDto.Id) == false)
             {
                 return NotFound(new ApiResponse()
                 {
                     DataObject = null,
                     Success = false,
-                    Messages = new List<string>() { "Not found" }
+                    Messages = new List<string>() { "WorkspaceItem not found" }
+                });
+            }
+
+            // Check if Workspace exists
+            if (await _unitOfWork.Workspaces.ExistsAsync(x => x.Id == workspaceItemReqDto.WorkspaceId) == false)
+            {
+                return NotFound(new ApiResponse()
+                {
+                    DataObject = null,
+                    Success = false,
+                    Messages = new List<string>() { "Workspace not found" }
+                });
+            }
+
+            // Check if Project exists
+            if (await _unitOfWork.Projects.ExistsAsync(x => x.Id == workspaceItemReqDto.ProjectId) == false)
+            {
+                return NotFound(new ApiResponse()
+                {
+                    DataObject = null,
+                    Success = false,
+                    Messages = new List<string>() { "Project not found" }
                 });
             }
 
             // Map DTO
             var workspaceItem = _mapper.Map<WorkspaceItem>(workspaceItemReqDto);
             // Include the id
-            workspaceItem.Id = workspaceItemId;
+            workspaceItem.Id = workspaceItemReqDto.Id;
             // TODO: Check if the ProjectStatus string value matches one of the terms from the DB
             if (string.IsNullOrEmpty(workspaceItemReqDto.ProjectStatus) == true)
             {
